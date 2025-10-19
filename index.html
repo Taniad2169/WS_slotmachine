@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The WebSwan Slot Machine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the slot machine look and feel */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Bungee+Inline&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* LIGHT COLOR SCHEME (The correct one you requested) */
+        body {
+            background: linear-gradient(135deg, #53d9e0, #53e0c2); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #000080; /* Navy Blue Text */
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            z-index: 10; 
+        }
+
+        h1 {
+            font-family: 'Bungee Inline', cursive;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            /* HEADER COLOR: White */
+            color: white; 
+            text-shadow: 2px 2px 0 #000080, 4px 4px 0 rgba(0, 0, 0, 0.2);
+            font-weight: 900;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        .bouncing-emoji {
+            display: inline-block;
+            animation: bounce 0.8s infinite alternate;
+            font-size: 1.5rem; 
+            margin: 0 5px;
+        }
+        .bouncing-emoji.alt {
+            animation-delay: 0.2s; 
+        }
+
+        /* --- Slot Machine Specific Styles --- */
+        .slot-machine {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border: 5px solid #ff9800; /* Orange Border */
+            margin-bottom: 30px;
+        }
+
+        .slot-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            perspective: 1000px;
+        }
+
+        .slot {
+            width: 90%;
+            max-width: 400px;
+            height: 180px;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2);
+            border: 3px solid #000080;
+        }
+
+        .slot-reel {
+            position: absolute;
+            width: 100%;
+            transition: transform 0.1s ease-out;
+        }
+
+        .slot-item {
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: #f0f9ff;
+        }
+
+        .slot-item h3 {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #000080;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            line-height: 1.3;
+        }
+        
+        /* --- Buttons and Results --- */
+        .spin-button, .claim-button, .cooldown-cta-button, .form-submit-button {
+            background: linear-gradient(145deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.2;
+            width: 100%;
+        }
+
+        .spin-button:disabled, .form-submit-button:disabled {
+            background: linear-gradient(145deg, #7a7a7a, #5a5a5a);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #ffecb3;
+            border-radius: 10px;
+            border: 2px solid #ff9800;
+            display: none;
+            color: #000080;
+            scroll-margin-top: 20px;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        /* --- Form Styles --- */
+        #registrationForm {
+            background: rgba(255, 255, 255, 0.95);
+            color: #023f5c;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: left;
+        }
+        
+        #registrationForm h2 {
+            text-align: center;
+            color: #ff4b2b;
+            font-weight: 800;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-weight: 500;
+        }
+
+        .url-input-container {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #000080;
+            background-color: #f0f9ff;
+        }
+        .url-prefix {
+            padding: 10px;
+            background-color: #000080;
+            color: white;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
+        .claim-button.loss-cta, .cooldown-cta-button.loss-cta {
+            background: linear-gradient(145deg, #1c3d82, #000080); /* Dark Blue/Navy */
+            color: #f0f9ff;
+            border: 3px solid #ff9800;
+            font-size: 1.1rem; 
+            padding: 15px 20px;
+            line-height: 1.2;
+            letter-spacing: 0;
+            font-weight: 700;
+            white-space: normal; 
+            text-transform: none;
+            margin-top: 15px;
+        }
+
+        /* --- MODAL STYLES (Professional Dark Theme) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+            width: 450px;
+            text-align: center;
+            color: #000080;
+            border: 4px solid #ff416c;
+        }
+        
+        .modal-content h2 {
+            font-size: 1.8rem;
+            color: #ff416c;
+            margin-bottom: 15px;
+            font-weight: 900;
+        }
+        
+        .modal-content p {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 1. AUDIO ELEMENT -->
+    <audio id="bellSound" src="https://assets.mixkit.co/sfx/preview/mixkit-bell-ringing-2016.mp3" preload="auto"></audio>
+
+    <!-- Confetti Canvas (Hidden until win) -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="container">
+        <!-- Main Header -->
+        <h1>The WebSwan Slot Machine</h1>
+        
+        <!-- DYNAMIC HEADER TEXT -->
+        <p class="text-xl mb-6 font-bold text-navy-800" style="color: #000080;">
+            Is your website performing on Google search? 
+            <span class="bouncing-emoji">🤔</span>
+            <span class="bouncing-emoji alt">🫤</span> 
+            Let's find out! Fill out the form and play the slot machine to win a prize towards your website analysis!
+        </p>
+
+        <!-- Privacy Policy Section -->
+        <div class="text-sm p-3 mb-6 rounded-lg bg-white bg-opacity-70 shadow-lg" style="color: #000080; font-weight: normal;">
+            <p>
+                <span class="font-bold">Privacy Policy:</span> Your information is being collected for the game purpose only. 
+                We don't share or sell your information to third party. Please view our privacy policy here: 
+                <a href="https://www.thewebswan.com/privacy-policy" target="_blank" class="text-red-600 underline font-bold hover:text-red-800">
+                    https://www.thewebswan.com/privacy-policy
+                </a>
+            </p>
+        </div>
+
+        <!-- Pre-Game Form Section -->
+        <div id="registrationForm" class="p-8 rounded-xl shadow-2xl transition duration-500 ease-in-out">
+            <h2 class="text-2xl font-bold mb-6 text-orange-600">Ready to Win?</h2>
+            <form id="businessForm">
+                <div class="input-group">
+                    <label for="businessName">Business Name (Required)</label>
+                    <input type="text" id="businessName" name="businessName" required>
+                </div>
+                <div class="input-group">
+                    <label for="emailAddress">Email Address (Required)</label>
+                    <input type="email" id="emailAddress" name="emailAddress" required>
+                </div>
+                <div class="input-group">
+                    <label for="phoneNumber">Phone Number (Required)</label>
+                    <input type="tel" id="phoneNumber" name="phoneNumber" required>
+                </div>
+                <div class="input-group">
+                    <label for="businessUrl">Business Website URL (Required)</label>
+                    <div class="url-input-container">
+                        <span class="url-prefix">https://www.</span>
+                        <input type="text" id="businessUrl" name="businessUrl" class="url-input" placeholder="example.com" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="contactMethod">Best Way to Contact (Required)</label>
+                    <select id="contactMethod" name="contactMethod" required>
+                        <option value="">-- Select --</option>
+                        <option value="Call">Call</option>
+                        <option value="Text">Text</option>
+                        <option value="Email">Email</option>
+                    </select>
+                </div>
+                <button type="submit" class="form-submit-button mt-4">
+                    Fill Out and Play!
+                </button>
+            </form>
+        </div>
+
+        <!-- Slot Machine Section (Hidden initially) -->
+        <div class="slot-machine hidden" id="slotMachine">
+            <div class="slot-container">
+                <div class="slot">
+                    <div class="slot-reel" id="reel"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="spin-button" id="spinButton">SPIN & WIN!</button>
+
+                <!-- This is where the result is displayed and acts as the scroll target -->
+                <div class="result" id="result">
+                    <h2 id="resultHeading"></h2>
+                    <p id="selectedPrize"></p>
+                </div>
+
+                <!-- Claim Button (Hidden until win/loss) -->
+                <button class="claim-button mt-4 hidden" id="claimButton"></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NEW: COOLDOWN MODAL -->
+    <div id="cooldownModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>🚨 Stop Right There!</h2>
+            <p>
+                Our system recognizes your business information. You've already played recently and must wait **2 weeks** to try and win a prize again.
+            </p>
+            <p>
+                Want to secure your competitive edge **now** and bypass the wait?
+            </p>
+            <button class="cooldown-cta-button loss-cta" id="cooldownCtaButton">
+                Claim Your Full Site Review (No Wait Needed) $175
+            </button>
+            <button class="text-sm mt-4 text-red-500 font-bold hover:text-red-700" onclick="hideModal()">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const API_ENDPOINT = "https://formspree.io/f/mnngbyyr"; 
+        const COOLDOWN_DAYS = 14; 
+        const IDENTITY_KEY = 'WebSwanSlotPlayedIdentities';
+        
+        // The four distinct possible outcomes (Prizes)
+        const prizes = [
+            { name: "Free Web Analysis!", message: "Congratulations! You've won a **FREE Web Analysis!** This is our top prize!", win: true, icon: "✨" }, 
+            { name: "$50 Off Analysis!", message: "Amazing! You won **$50 off** towards your comprehensive web analysis!", win: true, icon: "💰" }, 
+            { name: "$25 Off Analysis!", message: "Nice! You won **$25 off** towards your comprehensive web analysis!", win: true, icon: "💸" }, 
+            { name: "Hmm, No Prize...", 
+              message: "Is your site truly optimized for search engines? Is your site mobile friendly? Is your site loading speed under 3 seconds? How many potential customers left your site while they waited for it to load? Is your site silently dropping cookies that could expose you to GDPR or CCPA fines$$$$? Click below for a site review it will only cost you $175.", 
+              win: false, icon: "💔" 
+            } 
+        ];
+
+        // The reel content is 4 sets of the 4 prizes (16 items total) for smooth scrolling
+        const reelPrizes = [...prizes, ...prizes, ...prizes, ...prizes];
+        
+        // --- DOM Elements ---
+        const registrationForm = document.getElementById('registrationForm');
+        const businessForm = document.getElementById('businessForm');
+        const slotMachine = document.getElementById('slotMachine');
+        const cooldownModal = document.getElementById('cooldownModal');
+        const reel = document.getElementById('reel');
+        const spinButton = document.getElementById('spinButton');
+        const claimButton = document.getElementById('claimButton');
+        const cooldownCtaButton = document.getElementById('cooldownCtaButton'); 
+        const result = document.getElementById('result');
+        const selectedPrizeElement = document.getElementById('selectedPrize');
+        const resultHeading = document.getElementById('resultHeading');
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const ctx = confettiCanvas.getContext('2d');
+        const bellSound = document.getElementById('bellSound'); 
+        
+        // --- State Variables ---
+        let hasPlayed = false;
+        let userData = {};
+        let finalPrize = null;
+        let animationFrameId = null;
+        const confettiEmojis = ['🎯', '💻', '🌐', '💰', '😃'];
+        let audioContextUnlocked = false; 
+
+        // --- Utility Functions ---
+        
+        // Helper to sanitize input for consistent comparison
+        function sanitizeInput(str) {
+            return str ? String(str).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+        }
+
+        // Checks if the user's current identity is in cooldown
+        function checkIfIdentityInCooldown(newUserData) {
+            const storedData = JSON.parse(localStorage.getItem(IDENTITY_KEY) || '[]');
+            const now = new Date().getTime();
+            const cooldownMs = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+
+            const newUrl = sanitizeInput(newUserData.businessUrl);
+            const newPhone = sanitizeInput(newUserData.phoneNumber);
+            const newEmail = sanitizeInput(newUserData.emailAddress); 
+
+            // Filter out expired entries and check for a match
+            let activeCooldownFound = false;
+            const updatedData = storedData.filter(entry => {
+                const entryAge = now - new Date(entry.timestamp).getTime();
+                
+                if (entryAge < cooldownMs) {
+                    // Check for identity match (URL OR Phone OR Email)
+                    const entryUrl = sanitizeInput(entry.url);
+                    const entryPhone = sanitizeInput(entry.phone);
+                    const entryEmail = sanitizeInput(entry.email); 
+
+                    if (entryUrl === newUrl || entryPhone === newPhone || entryEmail === newEmail) {
+                        activeCooldownFound = true;
+                    }
+                    return true; // Keep active entry
+                }
+                return false; // Remove expired entry
+            });
+
+            // Save the cleaned-up data back to localStorage
+            localStorage.setItem(IDENTITY_KEY, JSON.stringify(updatedData));
+
+            return activeCooldownFound;
+        }
+
+        // Saves the new player's identity to localStorage
+        function storeIdentityOnPlay(data) {
+            const storedData = JSON.parse(localStorage.getItem(IDENTITY_KEY) || '[]');
+            
+            const newEntry = {
+                timestamp: new Date().toISOString(),
+                url: data.businessUrl,
+                phone: data.phoneNumber,
+                email: data.emailAddress, 
+            };
+            
+            storedData.push(newEntry);
+            localStorage.setItem(IDENTITY_KEY, JSON.stringify(storedData));
+        }
+        
+        function initializeReel() {
+            reel.innerHTML = reelPrizes.map(item => `
+                <div class="slot-item">
+                    <h3 class="${item.win ? 'text-green-600' : 'text-red-600'}">${item.icon} ${item.name}</h3>
+                    <p class="text-xs text-gray-700">${item.message.split(' ').slice(0, 6).join(' ')}...</p>
+                </div>
+            `).join('');
+            
+            reel.style.transform = 'translateY(0)';
+        }
+
+        function unlockAudioContext() {
+            if (audioContextUnlocked || !bellSound || !bellSound.src) return;
+            
+            bellSound.muted = true;
+            bellSound.play()
+                .then(() => {
+                    bellSound.pause();
+                    bellSound.currentTime = 0;
+                    bellSound.muted = false;
+                    audioContextUnlocked = true;
+                })
+                .catch(e => {
+                    console.warn("Audio unlock failed.");
+                });
+        }
+        
+        function playBellSound() {
+            if (!bellSound || !bellSound.src) {
+                console.error("Cannot play sound: Audio source is missing.");
+                return;
+            }
+            
+            if (!audioContextUnlocked) {
+                unlockAudioContext(); 
+            }
+            
+            bellSound.currentTime = 0; 
+            bellSound.play().catch(error => {
+                console.warn("Sound play failed on win.");
+            });
+        }
+
+        // --- Modal Control ---
+        function showModal() {
+            cooldownModal.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            cooldownModal.classList.add('hidden');
+        }
+        
+        // --- Game Logic ---
+
+        function spinReel() {
+            if (hasPlayed) { return; }
+            
+            spinButton.disabled = true;
+            result.classList.remove('show');
+            claimButton.classList.add('hidden');
+            claimButton.classList.remove('loss-cta');
+            
+            // 1. Determine the final prize index
+            const finalPrizeIndex = Math.floor(Math.random() * prizes.length); 
+            finalPrize = prizes[finalPrizeIndex];
+            
+            // 2. Calculate the reel's stopping position
+            const itemHeight = 180;
+            const totalPrizeOptions = prizes.length; 
+            const startingSetIndex = 2; 
+            const finalTargetPosition = -(itemHeight * (finalPrizeIndex + (totalPrizeOptions * startingSetIndex))); 
+            
+            animateReel(reel, finalTargetPosition, () => {
+                // --- Animation complete ---
+                
+                hasPlayed = true;
+                
+                // Store identity now that the spin is complete
+                storeIdentityOnPlay(userData);
+                
+                spinButton.textContent = "Played. Cooldown Active.";
+                
+                // Handle Win/Lose display
+                if (finalPrize.win) {
+                    playBellSound(); 
+                    startConfetti(); 
+                    
+                    // Show result
+                    resultHeading.textContent = "🎉 CONGRATULATIONS! 🎉";
+                    selectedPrizeElement.innerHTML = `**${finalPrize.message}**`;
+                    result.classList.add('show');
+
+                    spinButton.classList.add('hidden');
+                    claimButton.textContent = "Click Here to Claim Your Prize!";
+                    claimButton.classList.remove('hidden');
+                    claimButton.classList.add('pulse');
+                    claimButton.onclick = () => claimPrize(true); // Win path
+
+                } else {
+                    // LOSS SCENARIO - PAID SITE REVIEW
+                    stopConfetti(); 
+
+                    // Show loss message (the thought-provoking questions)
+                    resultHeading.textContent = "💔 TIME TO GET SERIOUS. Here are the real questions:";
+                    selectedPrizeElement.innerHTML = `<ul class="list-disc list-inside text-left mx-auto max-w-sm font-normal text-gray-800">
+                        ${finalPrize.message.split('?').slice(0, -1).map(q => `<li>${q.trim()}?</li>`).join('')}
+                        <li class="mt-4 font-bold text-lg text-red-600">${finalPrize.message.split('?').slice(-1)[0].trim()}</li>
+                    </ul>`;
+                    result.classList.add('show');
+                    
+                    // Repurpose the Claim button for the new PAID CTA
+                    claimButton.textContent = "Claim Your Site Review (No Prize Needed) $175 for a full site analysis";
+                    claimButton.classList.remove('hidden');
+                    claimButton.classList.add('loss-cta'); // Dark blue CTA
+                    claimButton.onclick = () => claimPrize(false); // Loss/Paid Review path
+                }
+
+                // Smooth scroll to the top of the result banner.
+                result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+
+        function animateReel(reel, targetPosition, callback) {
+            const startPosition = parseFloat(reel.style.transform.match(/translateY\((.*)px\)/)?.[1] || 0);
+            const duration = 3000 + Math.random() * 1000;
+            const startTime = performance.now();
+            
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const easeOut = 1 - Math.pow(1 - progress, 5);
+                
+                const currentPosition = startPosition + (targetPosition - startPosition) * easeOut;
+                reel.style.transform = `translateY(${currentPosition}px)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Snap to exact target position and reset reel for next potential spin
+                    reel.style.transform = `translateY(${targetPosition}px)`;
+                    
+                    setTimeout(() => {
+                        const itemHeight = 180;
+                        const totalPrizeOptions = prizes.length; 
+                        
+                        const resetIndex = (targetPosition / -itemHeight) % totalPrizeOptions; 
+                        const resetPosition = -(itemHeight * resetIndex);
+                        
+                        reel.style.transition = 'none';
+                        reel.style.transform = `translateY(${resetPosition}px)`;
+                        setTimeout(() => {
+                            reel.style.transition = 'transform 0.1s ease-out';
+                        }, 50);
+                    }, 100);
+
+                    if (callback) callback();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Claim Prize Handler
+        function claimPrize(isPrizeWin) {
+            if (!finalPrize && isPrizeWin) { 
+                resultHeading.textContent = "Error";
+                selectedPrizeElement.textContent = "No outcome to claim.";
+                return;
+            }
+
+            // Determine if this is a prize claim or a paid review from cooldown/loss
+            const isPaidReview = !isPrizeWin;
+
+            const prizeText = isPrizeWin ? finalPrize.name : "PAID Full Site Review ($175)"; 
+
+            const finalData = {
+                "Prize_Won": prizeText,
+                "Business_Name": userData.businessName,
+                "Email_Address": userData.emailAddress, 
+                "Phone_Number": userData.phoneNumber,
+                "Website_URL": `https://www.${userData.businessUrl}`, 
+                "Contact_Method": userData.contactMethod,
+                "Submission_Timestamp": new Date().toISOString()
+            };
+
+            // LOSS/COOLDOWN STATUS IDENTIFIER
+            if (isPaidReview) {
+                finalData["Lead_Type"] = "Paid Review Interest (Cooldown/Loss)";
+                finalData["Price"] = "$175";
+            } else {
+                finalData["Lead_Type"] = "Won Prize - Free/Discount Claim";
+            }
+
+            const buttonToDisable = isPrizeWin ? claimButton : cooldownCtaButton;
+            const originalText = buttonToDisable.textContent;
+
+            buttonToDisable.textContent = "Sending...";
+            buttonToDisable.disabled = true;
+            buttonToDisable.classList.remove('pulse');
+
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(finalData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    if (!isPaidReview) {
+                        resultHeading.textContent = "✅ DETAILS SUBMITTED! ✅";
+                        selectedPrizeElement.innerHTML = `We received your details for the **${finalPrize.name}** and **will be in touch soon to provide your prize/discount!**`;
+                        spinButton.classList.add('hidden');
+                        claimButton.textContent = "SUBMITTED!";
+                        stopConfetti();
+                    } else {
+                        // Success message for PAID review from modal/loss
+                        hideModal();
+                        registrationForm.classList.add('hidden');
+                        slotMachine.classList.add('hidden');
+                        
+                        // Display temporary success message on the main screen
+                        const successDiv = document.createElement('div');
+                        successDiv.className = 'result show bg-green-100 border-green-500 text-green-700';
+                        successDiv.style.color = '#000080';
+                        successDiv.innerHTML = '<h2 style="color: #000080;">✅ PAID REVIEW REQUEST SUBMITTED! ✅</h2><p>We received your request for the **Full Site Review ($175)** and **will be in touch shortly with payment and analysis details!**</p>';
+                        registrationForm.parentNode.insertBefore(successDiv, registrationForm.nextSibling);
+
+                        cooldownCtaButton.textContent = "SUBMITTED!";
+                    }
+                } else {
+                    console.error("Formspree Submission Error:", response.status);
+                    buttonToDisable.textContent = "Error! Try Again.";
+                    buttonToDisable.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error("Network or Fetch Error:", error);
+                buttonToDisable.textContent = "Network Error! Try Again.";
+                buttonToDisable.disabled = false;
+            });
+        }
+
+        // --- Confetti Animation Logic ---
+
+        class ConfettiParticle {
+            constructor(emoji) {
+                this.emoji = emoji;
+                this.size = 20 + Math.random() * 15;
+                this.x = Math.random() * confettiCanvas.width;
+                this.y = 0; 
+                this.vx = (Math.random() * 2 + 1) * (Math.random() > 0.5 ? 1 : -1); 
+                this.vy = (Math.random() * 2 + 3); 
+                this.alpha = 1;
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.1 - 0.05;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.005; 
+                this.rotation += this.rotationSpeed;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.font = `${this.size}px serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, 0, 0);
+                ctx.restore();
+            }
+        }
+        
+        let confettiParticles = []; // Moved outside the class definition
+        
+        function resizeCanvas() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        
+        function updateConfetti() {
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+            if (Math.random() > 0.8) { 
+                const randomEmoji = confettiEmojis[Math.floor(Math.random() * confettiEmojis.length)];
+                confettiParticles.push(new ConfettiParticle(randomEmoji));
+            }
+
+            for (let i = confettiParticles.length - 1; i >= 0; i--) {
+                const p = confettiParticles[i];
+                p.update();
+                p.draw();
+
+                if (p.y > confettiCanvas.height || p.alpha <= 0) {
+                    confettiParticles.splice(i, 1);
+                }
+            }
+
+            if (confettiCanvas.classList.contains('active')) {
+                animationFrameId = requestAnimationFrame(updateConfetti);
+            }
+        }
+
+        function startConfetti() {
+            confettiCanvas.classList.add('active');
+            resizeCanvas();
+            confettiParticles = []; 
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            updateConfetti();
+        }
+
+        function stopConfetti() {
+            confettiCanvas.classList.remove('active');
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+
+
+        // --- Event Listeners and Initialization ---
+
+        // Initial Form Submission
+        businessForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            unlockAudioContext();
+
+            const formElements = e.target.elements;
+            const newUserData = {
+                businessName: formElements.businessName.value.trim(),
+                emailAddress: formElements.emailAddress.value.trim(), 
+                phoneNumber: formElements.phoneNumber.value.trim(),
+                businessUrl: formElements.businessUrl.value.trim(), 
+                contactMethod: formElements.contactMethod.value
+            };
+            
+            // Set global userData for claim functions
+            userData = newUserData;
+
+            if (checkIfIdentityInCooldown(newUserData)) {
+                // If the identity is on cooldown, show the MODAL
+                showModal();
+            } else {
+                // If identity is new or cooldown expired, proceed to the game
+                registrationForm.classList.add('hidden');
+                slotMachine.classList.remove('hidden');
+                initializeReel();
+                slotMachine.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        spinButton.addEventListener('click', spinReel);
+        
+        // Cooldown CTA button logic: submits the collected form data as a paid lead from the modal
+        cooldownCtaButton.addEventListener('click', () => {
+            // isPrizeWin = false here, indicating a paid review lead (loss/cooldown)
+            if (Object.keys(userData).length > 0) {
+                 claimPrize(false); 
+            } else {
+                 hideModal();
+                 console.error('User data missing. Please ensure all form fields are filled out.'); 
+            }
+        });
+        
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = initializeReel;
+    </script>
+</body>
+</html>
